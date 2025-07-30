@@ -48,586 +48,503 @@
             color: white;
         }
         .feedback {
-            opacity: 0;
-            transition: opacity 0.5s ease;
+            transition: all 0.5s ease;
         }
-        .feedback.show {
-            opacity: 1;
+        .character {
+            position: absolute;
+            bottom: 20px;
+            width: 150px;
+            height: auto;
+            transition: transform 0.5s ease;
+        }
+        .char-left { left: 20px; }
+        .char-right { right: 20px; }
+        @media (max-width: 768px) {
+            .character { width: 100px; bottom: 10px; }
+            .char-left { left: 5px; }
+            .char-right { right: 5px; }
         }
         .confetti {
             position: absolute;
-            z-index: 1000;
-            animation: confetti-fall 2.5s linear infinite;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            opacity: 0;
+            animation: confetti-fall 2s ease-out forwards;
         }
         @keyframes confetti-fall {
-            0% {
-                transform: translateY(-100vh) rotate(0deg);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(100vh) rotate(720deg);
-                opacity: 0;
-            }
-        }
-        .floating-icons {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
-        }
-        .floating-icon {
-            position: absolute;
-            font-size: 2rem;
-            opacity: 0.1;
-            animation: float 10s infinite ease-in-out;
-        }
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0px) rotate(0deg);
-            }
-            50% {
-                transform: translateY(-20px) rotate(10deg);
-            }
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
         }
         .timer-bar {
-            height: 4px;
-            background-color: #34d399;
             transition: width 1s linear;
-            border-radius: 2px;
         }
-        .timer-bar.warning {
-            background-color: #fbbf24;
+        .keypad-btn {
+            width: 70px;
+            height: 70px;
+            font-size: 1.8rem; /* Adjusted for better fit */
+            border-radius: 1rem; /* rounded-2xl */
         }
-        .timer-bar.danger {
-            background-color: #f87171;
+        @media (max-width: 400px) {
+            .keypad-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
         }
-        .question-card {
-            background: linear-gradient(135deg, #fef3c7, #fde68a);
-            border: 3px solid #d97706;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-        }
-        .answer-input {
-            background: linear-gradient(135deg, #e0f2fe, #b3e5fc);
-            border: 3px solid #0284c7;
-        }
-        .number-pad {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.5rem;
-            max-width: 200px;
-            margin: 0 auto;
-        }
-        .number-btn {
-            aspect-ratio: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            font-weight: 600;
-            background: linear-gradient(135deg, #f0f9ff, #dbeafe);
-            border: 2px solid #3b82f6;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .number-btn:hover {
-            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-            transform: scale(1.05);
-        }
-        .number-btn:active {
-            transform: scale(0.95);
-        }
-        .character {
-            width: 80px;
-            height: 80px;
-            object-fit: contain;
-            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
-        }
-        .progress-ring {
-            transform: rotate(-90deg);
-        }
-        .progress-ring-circle {
-            stroke-dasharray: 283;
-            stroke-dashoffset: 283;
-            transition: stroke-dashoffset 0.3s ease;
-            fill: transparent;
-            stroke: #3b82f6;
-            stroke-width: 6;
-        }
-        .celebration {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 2000;
-            text-align: center;
-            opacity: 0;
-            scale: 0.5;
-            transition: all 0.5s ease;
-        }
-        .celebration.show {
-            opacity: 1;
-            scale: 1;
+        #answer-display {
+             transition: border-color 0.3s ease;
         }
     </style>
 </head>
-<body>
-    <div class="floating-icons">
-        <div class="floating-icon" style="top: 10%; left: 10%; animation-delay: 0s;">🌟</div>
-        <div class="floating-icon" style="top: 20%; left: 80%; animation-delay: 2s;">⭐</div>
-        <div class="floating-icon" style="top: 60%; left: 15%; animation-delay: 4s;">🎉</div>
-        <div class="floating-icon" style="top: 70%; left: 85%; animation-delay: 6s;">🎈</div>
-        <div class="floating-icon" style="top: 30%; left: 50%; animation-delay: 8s;">🌈</div>
-    </div>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <!-- Background Characters -->
+    <img src="img/unicorn.png" alt="Nhân vật hoạt hình ong" class="character char-left">
+    <img src="img/dinasour.png" alt="Nhân vật hoạt hình khủng long" class="character char-right">
 
-    <div id="confetti-container" class="fixed inset-0 pointer-events-none z-50"></div>
+    <div id="confetti-container" class="absolute inset-0 pointer-events-none"></div>
 
-    <div class="min-h-screen flex items-center justify-center p-4">
-        <div class="app-container rounded-3xl shadow-2xl p-6 w-full max-w-4xl">
-            <!-- Header -->
-            <div class="text-center mb-6">
-                <h1 class="text-4xl font-bold text-blue-600 mb-2">🧠 Bé Vui Học Bảng Cửu Chương 🎯</h1>
-                <p class="text-gray-600 text-lg">Cùng học toán vui vẻ với những người bạn đáng yêu!</p>
-            </div>
-
-            <!-- Game Stats -->
-            <div class="flex justify-between items-center mb-6 bg-white/50 rounded-2xl p-4">
-                <div class="flex items-center space-x-4">
-                    <div class="text-lg font-semibold text-green-600" id="score-display">Điểm: 0</div>
-                    <div class="text-lg font-semibold text-blue-600" id="question-counter">Câu: 0/20</div>
-                </div>
-                <div class="flex-1 mx-4">
-                    <div class="bg-gray-200 rounded-full h-4 relative overflow-hidden">
-                        <div id="timer-bar" class="timer-bar h-full"></div>
-                    </div>
-                    <div class="text-center text-sm font-medium text-gray-700 mt-1" id="timer-display">Thời gian: 10</div>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <img src="img/unicorn.png" alt="Unicorn" class="character">
-                    <img src="img/dinasour.png" alt="Dinosaur" class="character">
-                </div>
-            </div>
-
-            <!-- Mode Selection -->
-            <div class="mb-6">
-                <h3 class="text-xl font-semibold text-center mb-4 text-gray-700">Chọn chế độ chơi:</h3>
-                <div class="flex justify-center space-x-4">
-                    <button id="practice-mode" class="btn btn-mode px-6 py-3 rounded-2xl font-semibold bg-green-400 text-white active">
-                        🎯 Luyện tập
-                    </button>
-                    <button id="test-mode" class="btn btn-mode px-6 py-3 rounded-2xl font-semibold bg-purple-400 text-white">
-                        📝 Kiểm tra
-                    </button>
-                    <button id="challenge-mode" class="btn btn-mode px-6 py-3 rounded-2xl font-semibold bg-red-400 text-white">
-                        🏆 Thử thách
-                    </button>
-                </div>
-            </div>
-
-            <!-- Table Selection (only for practice mode) -->
-            <div id="table-selection" class="mb-6">
-                <h3 class="text-xl font-semibold text-center mb-4 text-gray-700">Chọn bảng cửu chương:</h3>
-                <div class="grid grid-cols-5 gap-3 max-w-md mx-auto">
-                    <button class="btn btn-table px-4 py-3 rounded-xl font-semibold bg-yellow-300 hover:bg-yellow-400" data-table="2">Bảng 2</button>
-                    <button class="btn btn-table px-4 py-3 rounded-xl font-semibold bg-yellow-300 hover:bg-yellow-400" data-table="3">Bảng 3</button>
-                    <button class="btn btn-table px-4 py-3 rounded-xl font-semibold bg-yellow-300 hover:bg-yellow-400" data-table="4">Bảng 4</button>
-                    <button class="btn btn-table px-4 py-3 rounded-xl font-semibold bg-yellow-300 hover:bg-yellow-400" data-table="5">Bảng 5</button>
-                    <button class="btn btn-table px-4 py-3 rounded-xl font-semibold bg-yellow-300 hover:bg-yellow-400" data-table="6">Bảng 6</button>
-                    <button class="btn btn-table px-4 py-3 rounded-xl font-semibold bg-yellow-300 hover:bg-yellow-400" data-table="7">Bảng 7</button>
-                    <button class="btn btn-table px-4 py-3 rounded-xl font-semibold bg-yellow-300 hover:bg-yellow-400" data-table="8">Bảng 8</button>
-                    <button class="btn btn-table px-4 py-3 rounded-xl font-semibold bg-yellow-300 hover:bg-yellow-400" data-table="9">Bảng 9</button>
-                    <button class="btn btn-table px-4 py-3 rounded-xl font-semibold bg-pink-300 hover:bg-pink-400" data-table="mixed">Trộn lẫn</button>
-                    <button class="btn btn-table px-4 py-3 rounded-xl font-semibold bg-indigo-300 hover:bg-indigo-400" data-table="review">Ôn tập</button>
-                </div>
-            </div>
-
-            <!-- Game Area -->
-            <div id="game-area" class="text-center" style="display: none;">
-                <!-- Question -->
-                <div class="question-card rounded-3xl p-8 mb-6 max-w-md mx-auto">
-                    <div class="text-5xl font-bold text-orange-600 mb-4" id="question-display">2 × 3 = ?</div>
-                </div>
-
-                <!-- Answer Input -->
-                <div class="answer-input rounded-3xl p-6 mb-6 max-w-sm mx-auto">
-                    <div class="text-4xl font-bold text-blue-700 min-h-[3rem] flex items-center justify-center" id="answer-display">&nbsp;</div>
-                </div>
-
-                <!-- Number Pad -->
-                <div class="number-pad mb-6">
-                    <button class="number-btn" onclick="addToAnswer('1')">1</button>
-                    <button class="number-btn" onclick="addToAnswer('2')">2</button>
-                    <button class="number-btn" onclick="addToAnswer('3')">3</button>
-                    <button class="number-btn" onclick="addToAnswer('4')">4</button>
-                    <button class="number-btn" onclick="addToAnswer('5')">5</button>
-                    <button class="number-btn" onclick="addToAnswer('6')">6</button>
-                    <button class="number-btn" onclick="addToAnswer('7')">7</button>
-                    <button class="number-btn" onclick="addToAnswer('8')">8</button>
-                    <button class="number-btn" onclick="addToAnswer('9')">9</button>
-                    <button class="number-btn bg-red-100 border-red-400 text-red-600" onclick="clearAnswer()">↻</button>
-                    <button class="number-btn" onclick="addToAnswer('0')">0</button>
-                    <button class="number-btn bg-green-100 border-green-400 text-green-600" onclick="submitAnswer()">✓</button>
-                </div>
-
-                <!-- Feedback -->
-                <div class="feedback text-2xl font-bold mb-4" id="feedback-display"></div>
-
-                <!-- Control Buttons -->
-                <div class="flex justify-center space-x-4">
-                    <button id="next-btn" class="btn px-6 py-3 rounded-2xl font-semibold bg-blue-400 text-white" onclick="nextQuestion()" style="display: none;">
-                        Câu tiếp theo ➡️
-                    </button>
-                    <button id="restart-btn" class="btn px-6 py-3 rounded-2xl font-semibold bg-gray-400 text-white" onclick="restartGame()">
-                        🔄 Chơi lại
-                    </button>
-                </div>
-            </div>
-
-            <!-- Results Screen -->
-            <div id="results-screen" class="text-center" style="display: none;">
-                <div class="bg-white/80 rounded-3xl p-8 max-w-md mx-auto">
-                    <h2 class="text-3xl font-bold text-green-600 mb-4">🎉 Kết quả</h2>
-                    <div class="text-6xl mb-4" id="final-character">🦄</div>
-                    <div class="text-2xl font-semibold mb-4" id="final-score">Điểm của bạn: 0/20</div>
-                    <div class="text-lg text-gray-600 mb-6" id="final-message">Tuyệt vời!</div>
-                    <div class="space-y-2 mb-6">
-                        <div class="text-sm text-gray-600">
-                            <span class="font-semibold text-green-600" id="correct-count">0</span> câu đúng |
-                            <span class="font-semibold text-red-600" id="wrong-count">0</span> câu sai |
-                            <span class="font-semibold text-yellow-600" id="timeout-count">0</span> hết giờ
-                        </div>
-                    </div>
-                    <button class="btn px-8 py-4 rounded-2xl font-semibold bg-blue-500 text-white" onclick="restartGame()">
-                        🎮 Chơi lại
-                    </button>
-                </div>
-            </div>
-
-            <!-- Celebration Animation -->
-            <div id="celebration" class="celebration">
-                <div class="text-8xl mb-4">🎉</div>
-                <div class="text-3xl font-bold text-yellow-500">Xuất sắc!</div>
+    <div class="app-container w-full max-w-3xl p-6 md:p-8 rounded-3xl shadow-2xl text-center">
+        <h1 class="text-4xl md:text-5xl font-bold text-pink-500 mb-4" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">Bé Vui Học Cửu Chương</h1>
+        
+        <!-- Mode Selection -->
+        <div id="mode-selection" class="mb-6">
+            <p class="text-gray-600 mb-4">Bé muốn học theo kiểu nào?</p>
+            <div class="flex justify-center gap-4">
+                <button id="mode-learn-btn" class="btn btn-mode bg-white text-gray-700 font-bold py-2 px-6 rounded-full active">Học từng bảng</button>
+                <button id="mode-review-btn" class="btn btn-mode bg-white text-gray-700 font-bold py-2 px-6 rounded-full">Ôn tập tổng hợp</button>
             </div>
         </div>
+        
+        <!-- Table Selection -->
+        <div id="table-selection-area">
+             <p id="selection-prompt" class="text-gray-600 mb-6">Hãy chọn một bảng cửu chương để bắt đầu nhé!</p>
+             <div id="table-selection" class="grid grid-cols-5 gap-3 mb-6">
+                <!-- Buttons will be generated by JS -->
+            </div>
+            <button id="start-review-btn" class="btn bg-green-500 hover:bg-green-600 text-white text-xl font-bold py-3 px-8 rounded-full hidden">Bắt đầu ôn tập!</button>
+        </div>
+
+        <!-- Game Area -->
+        <div id="game-area" class="space-y-4 hidden">
+            <!-- Stats Display -->
+            <div id="stats-display" class="grid grid-cols-3 gap-4 text-white text-xl font-bold mb-4">
+                <div id="score-display" class="bg-blue-400 p-2 rounded-lg">Điểm: 0</div>
+                <div id="question-counter" class="bg-purple-400 p-2 rounded-lg">Câu: 1/20</div>
+                <div id="timer-display" class="bg-pink-400 p-2 rounded-lg">Thời gian: 10</div>
+            </div>
+            <!-- Timer Bar -->
+            <div class="w-full bg-gray-200 rounded-full h-4 mb-4 shadow-inner">
+                <div id="timer-bar" class="bg-gradient-to-r from-green-400 to-yellow-300 h-4 rounded-full timer-bar" style="width: 100%"></div>
+            </div>
+
+            <div id="problem-display" class="text-6xl font-bold text-indigo-600 bg-white p-6 rounded-2xl shadow-inner">
+                ? x ? = ?
+            </div>
+
+            <!-- Answer and Keypad Area -->
+            <div class="flex flex-col items-center justify-center gap-4 mt-4">
+                <!-- Answer Display -->
+                <div id="answer-display" class="text-4xl text-center w-48 h-16 p-3 border-4 border-yellow-400 rounded-xl bg-white flex items-center justify-center text-gray-700 font-bold">
+                    &nbsp; <!-- non-breaking space for initial height -->
+                </div>
+
+                <!-- Keypad -->
+                <div id="keypad" class="grid grid-cols-3 gap-3 mt-2">
+                    <!-- Keypad buttons will be generated by JS -->
+                </div>
+            </div>
+        </div>
+        
+         <!-- Final Score Area -->
+        <div id="final-score-area" class="hidden text-center p-8">
+            <h2 class="text-4xl font-bold text-green-500 mb-2">Hoàn thành!</h2>
+            <p class="text-2xl text-gray-700 mb-4">Tổng điểm của bé là:</p>
+            <p id="final-score" class="text-7xl font-bold text-yellow-500 mb-6">0</p>
+            <div class="flex justify-center gap-8 text-2xl text-gray-600 mb-8">
+                <p>✅ Đúng: <span id="correct-count" class="font-bold text-green-600">0</span></p>
+                <p>❌ Sai: <span id="incorrect-count" class="font-bold text-red-600">0</span></p>
+            </div>
+            <button id="play-again-btn" class="btn bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold py-3 px-8 rounded-full">Chơi lại</button>
+        </div>
+
+
+        <!-- Feedback Message -->
+        <div id="feedback-message" class="feedback text-3xl font-bold mt-4 h-12"></div>
     </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // --- GAME VARIABLES ---
-    let currentMode = 'practice';
-    let selectedTable = null;
-    let currentQuestion = {};
-    let score = 0;
-    let questionCounter = 0;
-    let correctAnswers = 0;
-    let wrongAnswers = 0;
-    let timeoutAnswers = 0;
-    let isAnswering = false;
-    let currentAnswerString = '';
-    let timerValue = 10;
-    let timerInterval = null;
-    let wrongQuestions = []; // For review mode
-    
-    const TOTAL_QUESTIONS = 20;
-    const TIMER_DURATION = 10;
-
-    // --- DOM ELEMENTS ---
-    const practiceMode = document.getElementById('practice-mode');
-    const testMode = document.getElementById('test-mode');
-    const challengeMode = document.getElementById('challenge-mode');
-    const tableSelection = document.getElementById('table-selection');
+document.addEventListener('DOMContentLoaded', function () {
+    // UI Elements
+    const tableSelectionContainer = document.getElementById('table-selection');
     const gameArea = document.getElementById('game-area');
-    const resultsScreen = document.getElementById('results-screen');
-    const questionDisplay = document.getElementById('question-display');
-    const answerDisplay = document.getElementById('answer-display');
-    const feedbackDisplay = document.getElementById('feedback-display');
+    const problemDisplay = document.getElementById('problem-display');
+    const feedbackMessage = document.getElementById('feedback-message');
+    const confettiContainer = document.getElementById('confetti-container');
+    const charLeft = document.querySelector('.char-left');
+    const charRight = document.querySelector('.char-right');
+    const modeLearnBtn = document.getElementById('mode-learn-btn');
+    const modeReviewBtn = document.getElementById('mode-review-btn');
+    const selectionPrompt = document.getElementById('selection-prompt');
+    const startReviewBtn = document.getElementById('start-review-btn');
+    const tableSelectionArea = document.getElementById('table-selection-area');
+    const modeSelection = document.getElementById('mode-selection');
+    const statsDisplay = document.getElementById('stats-display');
     const scoreDisplay = document.getElementById('score-display');
     const questionCounterDisplay = document.getElementById('question-counter');
     const timerDisplay = document.getElementById('timer-display');
     const timerBar = document.getElementById('timer-bar');
-    const nextBtn = document.getElementById('next-btn');
-    const confettiContainer = document.getElementById('confetti-container');
-    const celebration = document.getElementById('celebration');
+    const finalScoreArea = document.getElementById('final-score-area');
+    const finalScoreDisplay = document.getElementById('final-score');
+    const playAgainBtn = document.getElementById('play-again-btn');
+    const answerDisplay = document.getElementById('answer-display');
+    const keypad = document.getElementById('keypad');
+    const correctCountDisplay = document.getElementById('correct-count');
+    const incorrectCountDisplay = document.getElementById('incorrect-count');
+
+    // Game State
+    let gameMode = 'learn'; // 'learn' or 'review'
+    let selectedTablesForReview = [];
+    let currentTable = 0;
+    let num1, num2, correctAnswer;
+    let score = 0;
+    let questionCounter = 0;
+    let correctCount = 0;
+    let incorrectCount = 0;
+    const TOTAL_QUESTIONS = 20;
+    let timerInterval;
+    let timerValue = 10;
+    let isAnswering = false;
+    let currentAnswerString = '';
+    
+    // Audio State
+    let audioContext;
 
     // --- INITIALIZATION ---
     function init() {
-        // Mode buttons
-        practiceMode.addEventListener('click', () => setMode('practice'));
-        testMode.addEventListener('click', () => setMode('test'));
-        challengeMode.addEventListener('click', () => setMode('challenge'));
-
-        // Table buttons
-        document.querySelectorAll('.btn-table').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const table = e.target.getAttribute('data-table');
-                selectTable(table);
-            });
-        });
-
-        // Number pad is handled by onclick in HTML
-        
-        // Keyboard support
-        document.addEventListener('keydown', handleKeyPress);
-        
-        updateStats();
+        createTableButtons();
+        createKeypad();
+        setupEventListeners();
+        resetUI();
     }
-
-    // --- MODE MANAGEMENT ---
-    function setMode(mode) {
-        currentMode = mode;
-        
-        // Update UI
-        document.querySelectorAll('.btn-mode').forEach(btn => btn.classList.remove('active'));
-        if (mode === 'practice') {
-            practiceMode.classList.add('active');
-            tableSelection.style.display = 'block';
-        } else if (mode === 'test') {
-            testMode.classList.add('active');
-            tableSelection.style.display = 'none';
-            selectTable('mixed');
-        } else if (mode === 'challenge') {
-            challengeMode.classList.add('active');
-            tableSelection.style.display = 'none';
-            selectTable('mixed');
-        }
-    }
-
-    function selectTable(table) {
-        selectedTable = table;
-        
-        // Update UI
-        document.querySelectorAll('.btn-table').forEach(btn => btn.classList.remove('active', 'selected-for-review'));
-        const selectedBtn = document.querySelector(`[data-table="${table}"]`);
-        if (selectedBtn) {
-            if (table === 'review') {
-                selectedBtn.classList.add('selected-for-review');
-            } else {
-                selectedBtn.classList.add('active');
+    
+    // --- AUDIO FUNCTIONS ---
+    // Initialize AudioContext on first user interaction to comply with browser policies
+    function initAudio() {
+        if (!audioContext) {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.error("Web Audio API is not supported in this browser");
             }
         }
+    }
+
+    // Play a clap/pop sound for correct answers
+    function playCorrectSound() {
+        if (!audioContext) return;
+
+        // This function creates a single "pop" sound at a given time
+        const playClap = (startTime) => {
+            const duration = 0.2;
+
+            // Create a buffer for white noise
+            const bufferSize = audioContext.sampleRate * duration;
+            const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+            const output = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            // Create a source for the noise
+            const noiseSource = audioContext.createBufferSource();
+            noiseSource.buffer = buffer;
+
+            // Create a filter to shape the noise
+            const bandpass = audioContext.createBiquadFilter();
+            bandpass.type = 'bandpass';
+            bandpass.frequency.value = 1500 + Math.random() * 500; // Add variation
+            bandpass.Q.value = 1.5;
+
+            // Create a gain node for the envelope
+            const gainNode = audioContext.createGain();
+            const startGain = Math.random() * 0.2 + 0.5; // Vary volume
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(startGain, startTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+            // Connect the nodes
+            noiseSource.connect(bandpass);
+            bandpass.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            // Play the sound
+            noiseSource.start(startTime);
+            noiseSource.stop(startTime + duration);
+        };
+
+        const now = audioContext.currentTime;
+        // Play 3 claps in quick succession to simulate applause
+        playClap(now);
+        playClap(now + 0.2);
+        playClap(now + 0.4);
+        playClap(now + 0.6);
+        playClap(now + 0.8);
+        playClap(now + 1);
+    }
+
+    // Play a low "buzz" for incorrect answers
+    function playIncorrectSound() {
+        if (!audioContext) return;
         
-        // Start game
-        startGame();
+        const playBuzz = (startTime) => {
+            const osc = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            const duration = 0.3; // Shorter duration for each buzz
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(120, startTime);
+            osc.frequency.exponentialRampToValueAtTime(80, startTime + duration);
+            gainNode.gain.setValueAtTime(0.3, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, startTime + duration);
+
+            osc.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        };
+
+        const now = audioContext.currentTime;
+        // Play two buzz sounds in quick succession
+        playBuzz(now);
+        playBuzz(now + 0.2);
+    }
+
+
+    function createTableButtons() {
+        for (let i = 1; i <= 10; i++) {
+            const button = document.createElement('button');
+            button.textContent = `Bảng ${i}`;
+            button.dataset.table = i;
+            button.className = 'btn btn-table bg-pink-300 hover:bg-pink-400 text-white font-bold py-3 px-4 rounded-xl text-lg';
+            button.addEventListener('click', handleTableSelection);
+            tableSelectionContainer.appendChild(button);
+        }
+    }
+
+    function createKeypad() {
+        const keyOrder = [1, 2, 3, 4, 5, 6, 7, 8, 9, 'Xóa', 0, 'OK'];
+        keyOrder.forEach(key => {
+            const button = document.createElement('button');
+            button.textContent = key;
+            button.className = 'btn keypad-btn font-bold';
+            
+            if (typeof key === 'number') {
+                button.classList.add('bg-white', 'hover:bg-gray-100', 'text-gray-800');
+                button.addEventListener('click', () => appendNumber(key));
+            } else if (key === 'Xóa') {
+                button.classList.add('bg-orange-400', 'hover:bg-orange-500', 'text-white', 'text-xl');
+                button.addEventListener('click', clearAnswer);
+            } else if (key === 'OK') {
+                button.classList.add('bg-green-500', 'hover:bg-green-600', 'text-white', 'text-xl');
+                button.addEventListener('click', handleAnswerSubmission);
+            }
+            keypad.appendChild(button);
+        });
+    }
+
+    function setupEventListeners() {
+        modeLearnBtn.addEventListener('click', () => switchMode('learn'));
+        modeReviewBtn.addEventListener('click', () => switchMode('review'));
+        startReviewBtn.addEventListener('click', startReview);
+        playAgainBtn.addEventListener('click', resetUI);
+    }
+    
+    function resetUI() {
+        gameMode = 'learn';
+        switchMode('learn');
+        finalScoreArea.classList.add('hidden');
+        modeSelection.classList.remove('hidden');
+        tableSelectionArea.classList.remove('hidden');
+        gameArea.classList.add('hidden');
+        feedbackMessage.textContent = '';
+        document.querySelectorAll('.btn-table').forEach(btn => btn.className = 'btn btn-table bg-pink-300 hover:bg-pink-400 text-white font-bold py-3 px-4 rounded-xl text-lg');
+    }
+
+    // --- MODE SWITCHING ---
+    function switchMode(newMode) {
+        initAudio(); // Ensure audio is ready when mode is switched
+        gameMode = newMode;
+        gameArea.classList.add('hidden');
+        feedbackMessage.textContent = '';
+        document.querySelectorAll('.btn-table').forEach(btn => {
+            btn.classList.remove('active', 'selected-for-review');
+        });
+        
+        if (gameMode === 'learn') {
+            modeLearnBtn.classList.add('active');
+            modeReviewBtn.classList.remove('active');
+            selectionPrompt.textContent = 'Hãy chọn một bảng cửu chương để bắt đầu nhé!';
+            startReviewBtn.classList.add('hidden');
+        } else { // review mode
+            modeLearnBtn.classList.remove('active');
+            modeReviewBtn.classList.add('active');
+            selectionPrompt.textContent = 'Tâm An hãy chọn bảng cửu chương muốn ôn tập!';
+            selectedTablesForReview = [];
+            updateStartReviewButton();
+        }
     }
 
     // --- GAME LOGIC ---
-    function startGame() {
-        // Reset game state
-        score = 0;
-        questionCounter = 0;
-        correctAnswers = 0;
-        wrongAnswers = 0;
-        timeoutAnswers = 0;
-        isAnswering = false;
-        currentAnswerString = '';
-        
-        // Show game area
-        tableSelection.style.display = 'none';
-        gameArea.style.display = 'block';
-        resultsScreen.style.display = 'none';
-        
-        updateStats();
-        generateNewQuestion();
+    function handleTableSelection(event) {
+        initAudio(); // Ensure audio is ready on first interaction
+        const clickedButton = event.currentTarget;
+        const tableNum = parseInt(clickedButton.dataset.table);
+
+        if (gameMode === 'learn') {
+            document.querySelectorAll('.btn-table').forEach(btn => btn.classList.remove('active'));
+            clickedButton.classList.add('active');
+            currentTable = tableNum;
+            startGame();
+        } else { // review mode
+            if (selectedTablesForReview.includes(tableNum)) {
+                selectedTablesForReview = selectedTablesForReview.filter(t => t !== tableNum);
+                clickedButton.classList.remove('selected-for-review');
+            } else {
+                selectedTablesForReview.push(tableNum);
+                clickedButton.classList.add('selected-for-review');
+            }
+            updateStartReviewButton();
+        }
+    }
+    
+    function updateStartReviewButton() {
+        if (gameMode === 'review' && selectedTablesForReview.length > 0) {
+            startReviewBtn.classList.remove('hidden');
+        } else {
+            startReviewBtn.classList.add('hidden');
+        }
     }
 
-    function generateNewQuestion() {
-        if (questionCounter >= TOTAL_QUESTIONS) {
-            endGame();
+    function startGame() {
+        modeSelection.classList.add('hidden');
+        tableSelectionArea.classList.add('hidden');
+        gameArea.classList.remove('hidden');
+        statsDisplay.classList.add('hidden'); // Hide stats in learn mode
+        isAnswering = true;
+        generateProblem();
+    }
+
+    function startReview() {
+        initAudio(); // Ensure audio is ready on first interaction
+        modeSelection.classList.add('hidden');
+        tableSelectionArea.classList.add('hidden');
+        gameArea.classList.remove('hidden');
+        statsDisplay.classList.remove('hidden'); // Show stats in review mode
+        
+        score = 0;
+        questionCounter = 0;
+        correctCount = 0;
+        incorrectCount = 0;
+        isAnswering = true;
+        updateStats();
+        generateProblem();
+    }
+
+    function generateProblem() {
+        if (gameMode === 'review' && questionCounter >= TOTAL_QUESTIONS) {
+            endReviewSession();
             return;
         }
 
-        questionCounter++;
+        clearAnswer();
+        answerDisplay.classList.remove('border-green-500', 'border-red-500');
+        answerDisplay.classList.add('border-yellow-400');
+        feedbackMessage.textContent = '';
         isAnswering = true;
-        currentAnswerString = '';
-        updateAnswerDisplay();
-        
-        // Clear previous feedback
-        feedbackDisplay.textContent = '';
-        feedbackDisplay.classList.remove('show');
-        nextBtn.style.display = 'none';
 
-        // Generate question based on selected table
-        if (selectedTable === 'mixed') {
-            const table = Math.floor(Math.random() * 8) + 2; // 2-9
-            const multiplier = Math.floor(Math.random() * 9) + 1; // 1-9
-            currentQuestion = {
-                table: table,
-                multiplier: multiplier,
-                answer: table * multiplier
-            };
-        } else if (selectedTable === 'review') {
-            if (wrongQuestions.length === 0) {
-                // If no wrong questions, generate mixed questions
-                const table = Math.floor(Math.random() * 8) + 2; // 2-9
-                const multiplier = Math.floor(Math.random() * 9) + 1; // 1-9
-                currentQuestion = {
-                    table: table,
-                    multiplier: multiplier,
-                    answer: table * multiplier
-                };
-            } else {
-                // Pick a random wrong question
-                const randomIndex = Math.floor(Math.random() * wrongQuestions.length);
-                currentQuestion = { ...wrongQuestions[randomIndex] };
-            }
-        } else {
-            const table = parseInt(selectedTable);
-            const multiplier = Math.floor(Math.random() * 9) + 1; // 1-9
-            currentQuestion = {
-                table: table,
-                multiplier: multiplier,
-                answer: table * multiplier
-            };
+        if (gameMode === 'learn') {
+            num1 = currentTable;
+            num2 = Math.floor(Math.random() * 10) + 1;
+        } else { // review mode
+            questionCounter++;
+            num1 = selectedTablesForReview[Math.floor(Math.random() * selectedTablesForReview.length)];
+            num2 = Math.floor(Math.random() * 10) + 1;
+            startTimer();
+            updateStats();
         }
-
-        questionDisplay.textContent = `${currentQuestion.table} × ${currentQuestion.multiplier} = ?`;
-        updateStats();
-        startTimer();
+        
+        correctAnswer = num1 * num2;
+        problemDisplay.textContent = `${num1} x ${num2} = ?`;
     }
 
     function handleAnswerSubmission() {
         if (!isAnswering) return;
         
-        isAnswering = false;
-        clearInterval(timerInterval);
+        if (currentAnswerString === '') {
+            feedbackMessage.textContent = 'Hãy nhập số nhé!';
+            feedbackMessage.className = 'feedback text-3xl font-bold mt-4 h-12 text-yellow-500';
+            return;
+        }
+
+        isAnswering = false; // Prevent multiple submissions
+        if (gameMode === 'review') {
+            clearInterval(timerInterval);
+        }
+
+        const userAnswer = parseInt(currentAnswerString);
         
-        const userAnswer = parseInt(currentAnswerString) || 0;
-        const isCorrect = userAnswer === currentQuestion.answer;
-        const isTimeout = currentAnswerString === '' && timerValue <= 0;
+        let isCorrect = (userAnswer === correctAnswer);
         
-        if (isTimeout) {
-            timeoutAnswers++;
-            showFeedback(`⏰ Hết giờ! Đáp án: ${currentQuestion.answer}`, 'text-orange-500');
-            // Add to wrong questions for review
-            wrongQuestions.push({ ...currentQuestion });
-        } else if (isCorrect) {
-            correctAnswers++;
-            score += calculateScore();
-            showFeedback('🎉 Chính xác! Tuyệt vời!', 'text-green-500');
+        if (isCorrect) {
+            playCorrectSound();
+            if (gameMode === 'review') correctCount++;
+            feedbackMessage.textContent = 'Đúng rồi! Bé Tâm An giỏi quá!';
+            feedbackMessage.className = 'feedback text-3xl font-bold mt-4 h-12 text-green-500';
+            answerDisplay.classList.remove('border-yellow-400', 'border-red-500');
+            answerDisplay.classList.add('border-green-500');
             triggerConfetti();
-            if (score % 50 === 0) { // Celebrate every 50 points
-                showCelebration();
+            charLeft.style.transform = 'translateY(-30px) rotate(-10deg)';
+            charRight.style.transform = 'translateY(-30px) rotate(10deg)';
+            if (gameMode === 'review') {
+                score += timerValue;
+                updateStats();
             }
         } else {
-            wrongAnswers++;
-            showFeedback(`❌ Sai rồi! Đáp án: ${currentQuestion.answer}`, 'text-red-500');
-            // Add to wrong questions for review
-            wrongQuestions.push({ ...currentQuestion });
+            playIncorrectSound();
+            if (gameMode === 'review') incorrectCount++;
+            feedbackMessage.textContent = `Chưa đúng! Đáp án là ${correctAnswer}`;
+            feedbackMessage.className = 'feedback text-3xl font-bold mt-4 h-12 text-red-500';
+            answerDisplay.classList.remove('border-yellow-400', 'border-green-500');
+            answerDisplay.classList.add('border-red-500');
+            charLeft.style.transform = 'translateY(10px) rotate(5deg)';
+            charRight.style.transform = 'translateY(10px) rotate(-5deg)';
         }
         
-        updateStats();
-        nextBtn.style.display = 'inline-block';
-    }
+        problemDisplay.textContent = `${num1} x ${num2} = ${correctAnswer}`;
 
-    function calculateScore() {
-        let baseScore = 10;
-        if (currentMode === 'challenge') {
-            baseScore = 15;
-        }
-        
-        // Bonus for quick answers
-        if (timerValue >= 7) {
-            baseScore += 5;
-        } else if (timerValue >= 4) {
-            baseScore += 2;
-        }
-        
-        return baseScore;
-    }
-
-    function showFeedback(message, className) {
-        feedbackDisplay.textContent = message;
-        feedbackDisplay.className = `feedback text-2xl font-bold mb-4 ${className}`;
-        feedbackDisplay.classList.add('show');
-    }
-
-    function showCelebration() {
-        celebration.classList.add('show');
         setTimeout(() => {
-            celebration.classList.remove('show');
+            charLeft.style.transform = 'translateY(0) rotate(0)';
+            charRight.style.transform = 'translateY(0) rotate(0)';
+            generateProblem();
+
         }, 2000);
     }
-
-    function nextQuestion() {
-        generateNewQuestion();
+    
+    function endReviewSession() {
+        gameArea.classList.add('hidden');
+        finalScoreArea.classList.remove('hidden');
+        finalScoreDisplay.textContent = score;
+        correctCountDisplay.textContent = correctCount;
+        incorrectCountDisplay.textContent = incorrectCount;
+        triggerConfetti();
     }
-
-    function endGame() {
-        gameArea.style.display = 'none';
-        resultsScreen.style.display = 'block';
-        
-        // Calculate final results
-        const percentage = Math.round((correctAnswers / TOTAL_QUESTIONS) * 100);
-        
-        document.getElementById('final-score').textContent = `Điểm của bạn: ${score}`;
-        document.getElementById('correct-count').textContent = correctAnswers;
-        document.getElementById('wrong-count').textContent = wrongAnswers;
-        document.getElementById('timeout-count').textContent = timeoutAnswers;
-        
-        // Set final message and character based on performance
-        const finalCharacter = document.getElementById('final-character');
-        const finalMessage = document.getElementById('final-message');
-        
-        if (percentage >= 90) {
-            finalCharacter.textContent = '🏆';
-            finalMessage.textContent = 'Xuất sắc! Bạn là thiên tài toán học!';
-            triggerConfetti();
-        } else if (percentage >= 75) {
-            finalCharacter.textContent = '🌟';
-            finalMessage.textContent = 'Tuyệt vời! Bạn làm rất tốt!';
-        } else if (percentage >= 60) {
-            finalCharacter.textContent = '😊';
-            finalMessage.textContent = 'Khá tốt! Hãy luyện tập thêm nhé!';
-        } else {
-            finalCharacter.textContent = '💪';
-            finalMessage.textContent = 'Đừng bỏ cuộc! Luyện tập sẽ giúp bạn tiến bộ!';
-        }
-    }
-
-    function restartGame() {
-        // Reset UI
-        resultsScreen.style.display = 'none';
-        gameArea.style.display = 'none';
-        
-        if (currentMode === 'practice') {
-            tableSelection.style.display = 'block';
-            document.querySelectorAll('.btn-table').forEach(btn => {
-                btn.classList.remove('active', 'selected-for-review');
-            });
-            selectedTable = null;
-        } else {
-            startGame();
-        }
-    }
-
-    // --- INPUT HANDLING ---
-    function handleKeyPress(event) {
-        if (!isAnswering) return;
-        
-        if (event.key >= '0' && event.key <= '9') {
-            addToAnswer(event.key);
-        } else if (event.key === 'Enter') {
-            submitAnswer();
-        } else if (event.key === 'Backspace' || event.key === 'Delete') {
-            clearAnswer();
-        }
-    }
-
-    // Global functions for number pad
-    window.addToAnswer = function(digit) {
-        if (!isAnswering) return;
-        if (currentAnswerString.length < 3) { // Limit to 3 digits
-            currentAnswerString += digit;
-            updateAnswerDisplay();
-        }
-    }
-
-    window.submitAnswer = function() {
-        if (!isAnswering || currentAnswerString === '') return;
-        handleAnswerSubmission();
+    
+    // --- KEYPAD FUNCTIONS ---
+    function appendNumber(num) {
+        if (!isAnswering || currentAnswerString.length >= 4) return;
+        currentAnswerString += num;
+        updateAnswerDisplay();
     }
 
     function clearAnswer() {
