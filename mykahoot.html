@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocab Kahoot!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+        }
+        .screen { display: none; }
+        .active-screen { display: flex; }
+        .answer-btn { transition: all 0.2s ease-in-out; }
+        .answer-btn:hover { transform: translateY(-4px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .player-card {
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        .player-card.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-4xl mx-auto">
+
+        <!-- Màn hình chính: Lựa chọn vai trò -->
+        <div id="role-selection-screen" class="screen active-screen flex-col items-center bg-white p-8 rounded-2xl shadow-xl">
+            <h1 class="text-4xl font-bold text-indigo-600 mb-2">Vocab Kahoot!</h1>
+            <p class="text-gray-600 mb-8">Học từ vựng chưa bao giờ vui hơn thế!</p>
+            <div class="flex space-x-4">
+                <button id="host-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-md">Tổ chức trò chơi</button>
+                <button id="join-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-md">Tham gia trò chơi</button>
+            </div>
+        </div>
+
+        <!-- Giao diện người tổ chức (Host) -->
+        <div id="host-view" class="hidden">
+            <!-- Màn hình cài đặt game -->
+            <div id="setup-screen" class="screen active-screen flex-col items-center bg-white p-8 rounded-2xl shadow-xl">
+                <h2 class="text-3xl font-bold mb-4">Cài đặt trò chơi</h2>
+                <textarea id="vocab-input" class="w-full h-48 p-3 border-2 border-gray-300 rounded-lg mb-4 focus:border-indigo-500 focus:ring-indigo-500" placeholder="Dán danh sách từ vựng tại đây. Mỗi từ một dòng.&#10;Định dạng: Tiếng Anh;Tiếng Việt&#10;Ví dụ:&#10;hello;xin chào&#10;goodbye;tạm biệt"></textarea>
+                <div class="mb-4">
+                    <label class="font-semibold mr-4">Hỏi bằng:</label>
+                    <input type="radio" id="ask-en" name="ask-lang" value="en" checked>
+                    <label for="ask-en" class="mr-4">Tiếng Anh</label>
+                    <input type="radio" id="ask-vi" name="ask-lang" value="vi">
+                    <label for="ask-vi">Tiếng Việt</label>
+                </div>
+                <button id="create-game-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-md">Tạo phòng chơi</button>
+            </div>
+
+            <!-- Màn hình phòng chờ (Lobby) -->
+            <div id="lobby-screen" class="screen flex-col items-center bg-white p-8 rounded-2xl shadow-xl">
+                <h2 class="text-2xl font-bold mb-2">Phòng chờ</h2>
+                <p class="mb-4">Chia sẻ mã phòng này cho người chơi:</p>
+                <div class="bg-gray-200 text-indigo-700 font-mono text-4xl font-bold p-4 rounded-lg mb-6 cursor-pointer" id="game-id-display" title="Nhấn để sao chép"></div>
+                <h3 class="text-xl font-semibold mb-4">Người chơi đã tham gia (<span id="player-count">0</span>):</h3>
+                <div id="player-list" class="w-full grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 min-h-[50px]"></div>
+                <button id="start-game-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-md disabled:bg-gray-400" disabled>Bắt đầu</button>
+            </div>
+
+            <!-- Màn hình câu hỏi -->
+            <div id="question-screen" class="screen flex-col items-center text-center bg-white p-8 rounded-2xl shadow-xl">
+                <div class="w-full flex justify-between items-center mb-6">
+                    <div class="text-lg font-bold">Câu <span id="question-number">1</span>/<span id="total-questions">10</span></div>
+                    <div id="timer" class="text-3xl font-bold bg-indigo-600 text-white rounded-full w-16 h-16 flex items-center justify-center shadow-lg">20</div>
+                </div>
+                <div class="bg-gray-100 w-full p-8 rounded-lg mb-8">
+                    <p class="text-4xl md:text-6xl font-bold" id="question-text">Câu hỏi ở đây</p>
+                </div>
+                <div id="options-grid" class="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Các lựa chọn sẽ được thêm vào đây bằng JS -->
+                </div>
+            </div>
+            
+            <!-- Màn hình hiển thị ai trả lời đúng/sai -->
+            <div id="answer-result-screen" class="screen flex-col items-center bg-white p-8 rounded-2xl shadow-xl">
+                 <h2 class="text-4xl font-bold mb-6" id="answer-result-text">Câu trả lời đúng là...</h2>
+                 <div class="text-3xl font-bold text-green-600 p-4 bg-green-100 rounded-lg mb-8" id="correct-answer-display"></div>
+                 <button id="next-question-btn" class="w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-md">Câu tiếp theo</button>
+            </div>
+
+            <!-- Màn hình bảng xếp hạng -->
+            <div id="leaderboard-screen" class="screen flex-col items-center bg-white p-8 rounded-2xl shadow-xl">
+                <h2 class="text-4xl font-bold mb-6">Bảng xếp hạng</h2>
+                <div id="leaderboard" class="w-full space-y-3"></div>
+                <button id="show-final-result-btn" class="hidden mt-6 w-1/2 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-md">Xem kết quả cuối cùng</button>
+            </div>
+
+            <!-- Màn hình kết thúc game -->
+            <div id="game-over-screen" class="screen flex-col items-center bg-white p-8 rounded-2xl shadow-xl">
+                <h2 class="text-5xl font-bold mb-4 text-amber-500">Trò chơi kết thúc!</h2>
+                <div id="final-podium" class="w-full flex justify-center items-end space-x-4 my-8">
+                    <!-- Podium được tạo bằng JS -->
+                </div>
+                <button id="play-again-btn" class="w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-md">Chơi lại</d>
+            </div>
+        </div>
+
+        <!-- Giao diện người chơi (Player) -->
+        <div id="player-view" class="hidden">
+            <!-- Màn hình nhập thông tin -->
+            <div id="join-screen" class="screen active-screen flex-col items-center bg-white p-8 rounded-2xl shadow-xl">
+                <h2 class="text-3xl font-bold mb-4">Tham gia phòng chơi</h2>
+                <input type="text" id="game-id-input" placeholder="Mã phòng" class="w-full text-center text-2xl p-3 border-2 border-gray-300 rounded-lg mb-4 uppercase focus:border-indigo-500 focus:ring-indigo-500" maxlength="6">
+                <input type="text" id="player-name-input" placeholder="Tên của bạn" class="w-full text-center text-2xl p-3 border-2 border-gray-300 rounded-lg mb-4 focus:border-indigo-500 focus:ring-indigo-500" maxlength="15">
+                <button id="join-game-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-md">Vào chơi</button>
+            </div>
+
+            <!-- Màn hình chờ của người chơi -->
+            <div id="player-waiting-screen" class="screen flex-col items-center justify-center text-center bg-white p-8 rounded-2xl shadow-xl min-h-[300px]">
+                <h2 class="text-3xl font-bold text-indigo-600">Bạn đã vào phòng!</h2>
+                <p class="text-gray-600 mt-2">Chờ người tổ chức bắt đầu nhé...</p>
+                 <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mt-8"></div>
+            </div>
+
+            <!-- Màn hình trả lời của người chơi -->
+            <div id="player-answer-screen" class="screen flex-col items-center justify-center bg-white p-8 rounded-2xl shadow-xl min-h-[400px]">
+                <div class="w-full h-full grid grid-cols-2 grid-rows-2 gap-4">
+                    <button data-answer-index="0" class="answer-btn text-white font-bold text-2xl rounded-lg bg-red-500 flex items-center justify-center"></button>
+                    <button data-answer-index="1" class="answer-btn text-white font-bold text-2xl rounded-lg bg-blue-500 flex items-center justify-center"></button>
+                    <button data-answer-index="2" class="answer-btn text-white font-bold text-2xl rounded-lg bg-yellow-500 flex items-center justify-center"></button>
+                    <button data-answer-index="3" class="answer-btn text-white font-bold text-2xl rounded-lg bg-green-500 flex items-center justify-center"></button>
+                </div>
+            </div>
+            
+             <!-- Màn hình chờ kết quả -->
+            <div id="player-result-wait-screen" class="screen flex-col items-center justify-center text-center bg-white p-8 rounded-2xl shadow-xl min-h-[300px]">
+                <h2 id="player-result-text" class="text-4xl font-bold">Đã ghi nhận câu trả lời!</h2>
+                <p class="text-gray-600 mt-2">Chờ kết quả nhé...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import các hàm cần thiết từ Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, updateDoc, deleteDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // CẤU HÌNH FIREBASE CỦA BẠN
+        // TODO: Thay thế đối tượng sau bằng cấu hình Firebase của dự án của bạn
+        // Truy cập: https://console.firebase.google.com/ -> Project settings -> General
+        const firebaseConfig = {
+            apiKey: "AIzaSyAU8nCC2vcpX7zKjx96BXs0UVOGZxYfqLM",
+            authDomain: "vua-tu-vung.firebaseapp.com",
+            projectId: "vua-tu-vung",
+            storageBucket: "vua-tu-vung.firebasestorage.app",
+            messagingSenderId: "442087527535",
+            appId: "1:442087527535:web:798b444a230d15044ca99a",
+            measurementId: "G-WDPFP8VJTR"
+        };
+
+        // Khởi tạo Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Các biến toàn cục
+        let currentRole = null; // 'host' or 'player'
+        let gameId = null;
+        let playerId = `player-${Math.random().toString(36).substr(2, 9)}`;
+        let vocabList = [];
+        let shuffledQuestions = [];
+        let currentQuestionIndex = -1;
+        let questionTimer;
+        let gameUnsubscribe = null; // Hàm để hủy lắng nghe sự kiện game
+        let playersUnsubscribe = null; // Hàm để hủy lắng nghe sự kiện người chơi
+
+        // DOM Elements
+        const roleSelectionScreen = document.getElementById('role-selection-screen');
+        const hostView = document.getElementById('host-view');
+        const playerView = document.getElementById('player-view');
+
+        // --- Logic chung ---
+        function showScreen(view, screenId) {
+            document.querySelectorAll(`#${view} .screen`).forEach(s => s.classList.remove('active-screen'));
+            document.getElementById(screenId).classList.add('active-screen');
+        }
+
+        document.getElementById('host-btn').addEventListener('click', () => {
+            currentRole = 'host';
+            roleSelectionScreen.style.display = 'none';
+            hostView.style.display = 'block';
+            showScreen('host-view', 'setup-screen');
+        });
+
+        document.getElementById('join-btn').addEventListener('click', () => {
+            currentRole = 'player';
+            roleSelectionScreen.style.display = 'none';
+            playerView.style.display = 'block';
+            showScreen('player-view', 'join-screen');
+        });
+
+        // --- Logic của người tổ chức (Host) ---
+        if (true) { // Đặt trong block để dễ quản lý
+            const createGameBtn = document.getElementById('create-game-btn');
+            const gameIdDisplay = document.getElementById('game-id-display');
+            const playerList = document.getElementById('player-list');
+            const playerCount = document.getElementById('player-count');
+            const startGameBtn = document.getElementById('start-game-btn');
+
+            createGameBtn.addEventListener('click', async () => {
+                const vocabText = document.getElementById('vocab-input').value.trim();
+                if (!vocabText) {
+                    alert('Vui lòng nhập danh sách từ vựng!');
+                    return;
+                }
+
+                vocabList = vocabText.split('\n').map(line => {
+                    const parts = line.split(';');
+                    return parts.length === 2 ? { en: parts[0].trim(), vi: parts[1].trim() } : null;
+                }).filter(Boolean);
+
+                if (vocabList.length < 4) {
+                    alert('Cần ít nhất 4 cặp từ vựng để tạo câu hỏi.');
+                    return;
+                }
+
+                gameId = Math.random().toString(36).substr(2, 6).toUpperCase();
+                gameIdDisplay.textContent = gameId;
+
+                const askLang = document.querySelector('input[name="ask-lang"]:checked').value;
+
+                try {
+                    await setDoc(doc(db, "games", gameId), {
+                        state: "lobby",
+                        askLang: askLang,
+                        currentQuestionIndex: -1,
+                        players: {}
+                    });
+                    
+                    showScreen('host-view', 'lobby-screen');
+                    listenForPlayers();
+                } catch (error) {
+                    console.error("Lỗi khi tạo game: ", error);
+                    alert("Không thể tạo game. Vui lòng kiểm tra lại cấu hình Firebase.");
+                }
+            });
+            
+            gameIdDisplay.addEventListener('click', () => {
+                navigator.clipboard.writeText(gameId).then(() => {
+                    alert(`Đã sao chép mã phòng: ${gameId}`);
+                });
+            });
+
+            function listenForPlayers() {
+                const playersRef = collection(db, "games", gameId, "players");
+                playersUnsubscribe = onSnapshot(playersRef, (snapshot) => {
+                    playerList.innerHTML = '';
+                    let count = 0;
+                    snapshot.forEach((doc) => {
+                        const player = doc.data();
+                        const playerCard = document.createElement('div');
+                        playerCard.className = 'player-card bg-gray-200 p-2 rounded-lg text-center font-semibold';
+                        playerCard.textContent = player.name;
+                        playerList.appendChild(playerCard);
+                        // Thêm hiệu ứng xuất hiện
+                        setTimeout(() => playerCard.classList.add('visible'), 100 * count);
+                        count++;
+                    });
+                    playerCount.textContent = count;
+                    startGameBtn.disabled = count === 0;
+                });
+            }
+
+            startGameBtn.addEventListener('click', () => {
+                shuffledQuestions = [...vocabList].sort(() => 0.5 - Math.random());
+                if (playersUnsubscribe) playersUnsubscribe(); // Dừng lắng nghe người chơi mới
+                nextQuestion();
+            });
+
+            async function nextQuestion() {
+                currentQuestionIndex++;
+                if (currentQuestionIndex >= shuffledQuestions.length) {
+                    showGameOver();
+                    return;
+                }
+
+                const questionData = generateQuestion(currentQuestionIndex);
+                
+                try {
+                    await updateDoc(doc(db, "games", gameId), {
+                        state: "question",
+                        currentQuestion: questionData,
+                        currentQuestionIndex: currentQuestionIndex
+                    });
+
+                    displayQuestion(questionData);
+                } catch (error) {
+                    console.error("Lỗi khi chuyển câu hỏi:", error);
+                }
+            }
+
+            function generateQuestion(index) {
+                const correctPair = shuffledQuestions[index];
+                const askLang = document.querySelector('input[name="ask-lang"]:checked').value;
+                
+                const question = askLang === 'en' ? correctPair.en : correctPair.vi;
+                const correctAnswer = askLang === 'en' ? correctPair.vi : correctPair.en;
+
+                const otherWords = vocabList
+                    .map(pair => askLang === 'en' ? pair.vi : pair.en)
+                    .filter(word => word !== correctAnswer);
+                
+                const shuffledOthers = otherWords.sort(() => 0.5 - Math.random());
+                const wrongAnswers = shuffledOthers.slice(0, 3);
+                
+                const options = [correctAnswer, ...wrongAnswers].sort(() => 0.5 - Math.random());
+
+                return {
+                    question,
+                    options,
+                    correctAnswer,
+                    startTime: Date.now()
+                };
+            }
+
+            function displayQuestion(qData) {
+                showScreen('host-view', 'question-screen');
+                document.getElementById('question-number').textContent = currentQuestionIndex + 1;
+                document.getElementById('total-questions').textContent = shuffledQuestions.length;
+                document.getElementById('question-text').textContent = qData.question;
+                
+                const optionsGrid = document.getElementById('options-grid');
+                optionsGrid.innerHTML = '';
+                const colors = ['bg-red-500', 'bg-blue-500', 'bg-yellow-500', 'bg-green-500'];
+                const shapes = ['▲', '◆', '●', '■'];
+
+                qData.options.forEach((option, i) => {
+                    optionsGrid.innerHTML += `
+                        <div class="${colors[i]} text-white p-4 rounded-lg flex items-center text-2xl font-bold">
+                            <span class="text-4xl mr-4">${shapes[i]}</span>
+                            <span>${option}</span>
+                        </div>
+                    `;
+                });
+
+                let timeLeft = 20;
+                const timerEl = document.getElementById('timer');
+                timerEl.textContent = timeLeft;
+                questionTimer = setInterval(() => {
+                    timeLeft--;
+                    timerEl.textContent = timeLeft;
+                    if (timeLeft <= 0) {
+                        clearInterval(questionTimer);
+                        showAnswerResult();
+                    }
+                }, 1000);
+            }
+            
+            async function showAnswerResult() {
+                clearInterval(questionTimer);
+                const gameDoc = await getDoc(doc(db, "games", gameId));
+                const currentQuestion = gameDoc.data().currentQuestion;
+                
+                await updateDoc(doc(db, "games", gameId), { state: "answer_result" });
+                
+                showScreen('host-view', 'answer-result-screen');
+                document.getElementById('correct-answer-display').textContent = currentQuestion.correctAnswer;
+                
+                const nextBtn = document.getElementById('next-question-btn');
+                if (currentQuestionIndex >= shuffledQuestions.length - 1) {
+                    nextBtn.textContent = 'Xem bảng xếp hạng cuối cùng';
+                    nextBtn.onclick = showLeaderboard;
+                } else {
+                    nextBtn.textContent = 'Câu tiếp theo';
+                    nextBtn.onclick = showLeaderboard;
+                }
+            }
+            
+            async function showLeaderboard() {
+                const playersRef = collection(db, "games", gameId, "players");
+                const snapshot = await getDocs(playersRef);
+                const players = [];
+                snapshot.forEach(doc => players.push(doc.data()));
+                
+                players.sort((a, b) => b.score - a.score);
+
+                const leaderboardEl = document.getElementById('leaderboard');
+                leaderboardEl.innerHTML = '';
+                players.slice(0, 5).forEach((player, i) => {
+                    leaderboardEl.innerHTML += `
+                        <div class="flex justify-between items-center p-3 rounded-lg ${i === 0 ? 'bg-amber-300' : 'bg-gray-200'}">
+                            <span class="text-xl font-bold">${i + 1}. ${player.name}</span>
+                            <span class="text-xl font-bold">${player.score}</span>
+                        </div>
+                    `;
+                });
+
+                await updateDoc(doc(db, "games", gameId), { state: "leaderboard" });
+                showScreen('host-view', 'leaderboard-screen');
+
+                // Sau 5 giây, tự động chuyển
+                setTimeout(() => {
+                     if (currentQuestionIndex >= shuffledQuestions.length - 1) {
+                        showGameOver();
+                     } else {
+                        nextQuestion();
+                     }
+                }, 5000);
+            }
+
+            async function showGameOver() {
+                await updateDoc(doc(db, "games", gameId), { state: "game_over" });
+                showScreen('host-view', 'game-over-screen');
+
+                const playersRef = collection(db, "games", gameId, "players");
+                const snapshot = await getDocs(playersRef);
+                const players = [];
+                snapshot.forEach(doc => players.push(doc.data()));
+                players.sort((a, b) => b.score - a.score);
+
+                const podiumEl = document.getElementById('final-podium');
+                podiumEl.innerHTML = '';
+                const podiumData = [
+                    { player: players[1], height: 'h-40', color: 'bg-slate-400', rank: '2nd' },
+                    { player: players[0], height: 'h-56', color: 'bg-amber-400', rank: '1st' },
+                    { player: players[2], height: 'h-32', color: 'bg-orange-400', rank: '3rd' },
+                ];
+
+                podiumData.forEach(item => {
+                    if (item.player) {
+                        podiumEl.innerHTML += `
+                            <div class="text-center text-white">
+                                <p class="font-bold text-2xl">${item.player.name}</p>
+                                <div class="${item.color} ${item.height} w-32 rounded-t-lg flex flex-col justify-center items-center p-2">
+                                    <p class="text-4xl font-bold">${item.rank}</p>
+                                    <p class="text-lg font-semibold">${item.player.score} pts</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            }
+            
+            document.getElementById('play-again-btn').addEventListener('click', () => {
+                // Xóa game cũ để dọn dẹp
+                if (gameId) {
+                    deleteDoc(doc(db, "games", gameId));
+                }
+                // Reset trạng thái
+                currentQuestionIndex = -1;
+                shuffledQuestions = [];
+                vocabList = [];
+                gameId = null;
+                showScreen('host-view', 'setup-screen');
+            });
+        }
+
+        // --- Logic của người chơi (Player) ---
+        if (true) {
+            const joinGameBtn = document.getElementById('join-game-btn');
+            const gameIdInput = document.getElementById('game-id-input');
+            const playerNameInput = document.getElementById('player-name-input');
+
+            joinGameBtn.addEventListener('click', async () => {
+                const enteredGameId = gameIdInput.value.trim().toUpperCase();
+                const playerName = playerNameInput.value.trim();
+
+                if (!enteredGameId || !playerName) {
+                    alert('Vui lòng nhập mã phòng và tên của bạn.');
+                    return;
+                }
+
+                const gameRef = doc(db, "games", enteredGameId);
+                const gameDoc = await getDoc(gameRef);
+
+                if (!gameDoc.exists()) {
+                    alert('Mã phòng không tồn tại!');
+                    return;
+                }
+                
+                if (gameDoc.data().state !== 'lobby') {
+                    alert('Trò chơi đã bắt đầu, không thể tham gia!');
+                    return;
+                }
+
+                gameId = enteredGameId;
+                
+                try {
+                    await setDoc(doc(db, "games", gameId, "players", playerId), {
+                        name: playerName,
+                        score: 0,
+                        id: playerId
+                    });
+
+                    listenToGameState();
+                    showScreen('player-view', 'player-waiting-screen');
+                } catch (error) {
+                    console.error("Lỗi khi tham gia game:", error);
+                    alert("Không thể tham gia. Vui lòng thử lại.");
+                }
+            });
+
+            function listenToGameState() {
+                gameUnsubscribe = onSnapshot(doc(db, "games", gameId), (doc) => {
+                    const gameState = doc.data();
+                    if (!gameState) {
+                        alert("Người tổ chức đã kết thúc trò chơi.");
+                        window.location.reload();
+                        return;
+                    }
+
+                    switch(gameState.state) {
+                        case 'lobby':
+                            showScreen('player-view', 'player-waiting-screen');
+                            break;
+                        case 'question':
+                            showScreen('player-view', 'player-answer-screen');
+                            setupAnswerButtons(gameState.currentQuestion);
+                            break;
+                        case 'answer_result':
+                        case 'leaderboard':
+                            showScreen('player-view', 'player-result-wait-screen');
+                            break;
+                        case 'game_over':
+                            if (gameUnsubscribe) gameUnsubscribe();
+                            alert('Trò chơi đã kết thúc! Cảm ơn bạn đã tham gia.');
+                            window.location.reload();
+                            break;
+                    }
+                });
+            }
+
+            function setupAnswerButtons(questionData) {
+                const answerButtons = document.querySelectorAll('.answer-btn');
+                // *** FIX: Thêm các biểu tượng vào nút trả lời của người chơi ***
+                const shapes = ['▲', '◆', '●', '■'];
+                answerButtons.forEach((btn, index) => {
+                    btn.disabled = false;
+                    btn.style.opacity = 1;
+                    // Thêm biểu tượng vào trong nút để người chơi biết chọn nút nào
+                    btn.innerHTML = `<span class="text-6xl">${shapes[index]}</span>`;
+                    btn.onclick = (e) => handleAnswer(e, questionData);
+                });
+            }
+
+            async function handleAnswer(event, questionData) {
+                const answerButtons = document.querySelectorAll('.answer-btn');
+                answerButtons.forEach(btn => {
+                    btn.disabled = true;
+                    // Sử dụng `currentTarget` để đảm bảo lấy đúng nút đã được nhấn
+                    if(btn !== event.currentTarget) {
+                       btn.style.opacity = 0.5;
+                    }
+                });
+
+                const selectedOption = questionData.options[event.currentTarget.dataset.answerIndex];
+                let scoreGained = 0;
+
+                if (selectedOption === questionData.correctAnswer) {
+                    const timeTaken = Date.now() - questionData.startTime; // ms
+                    // Tính điểm: điểm tối đa 1000, trừ dần theo thời gian
+                    const timePenalty = Math.floor(timeTaken / 20); // 1 điểm cho mỗi 20ms
+                    scoreGained = Math.max(0, 1000 - timePenalty);
+                    document.getElementById('player-result-text').textContent = "Đúng rồi!";
+                } else {
+                    document.getElementById('player-result-text').textContent = "Sai mất rồi!";
+                }
+                
+                showScreen('player-view', 'player-result-wait-screen');
+
+                const playerRef = doc(db, "games", gameId, "players", playerId);
+                const playerDoc = await getDoc(playerRef);
+                const currentScore = playerDoc.data().score;
+
+                await updateDoc(playerRef, {
+                    score: currentScore + scoreGained
+                });
+            }
+        }
+        
+        // Dọn dẹp khi người dùng đóng tab/trình duyệt
+        window.addEventListener('beforeunload', async (e) => {
+            if (!gameId) return;
+
+            if (currentRole === 'player') {
+                await deleteDoc(doc(db, "games", gameId, "players", playerId));
+            }
+            if (currentRole === 'host') {
+                // Xóa tất cả người chơi trong subcollection
+                const playersRef = collection(db, "games", gameId, "players");
+                const playersSnapshot = await getDocs(playersRef);
+                const batch = writeBatch(db);
+                playersSnapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
+                // Xóa game
+                await deleteDoc(doc(db, "games", gameId));
+            }
+        });
+
+    </script>
+</body>
+</html>
