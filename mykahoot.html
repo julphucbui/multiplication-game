@@ -342,7 +342,7 @@
                     `;
                 });
 
-                let timeLeft = 20;
+                let timeLeft = 5;
                 const timerEl = document.getElementById('timer');
                 timerEl.textContent = timeLeft;
                 questionTimer = setInterval(() => {
@@ -404,7 +404,7 @@
                      } else {
                         nextQuestion();
                      }
-                }, 5000);
+                }, 3000);
             }
 
             async function showGameOver() {
